@@ -13,8 +13,9 @@ import {
 } from "react-native";
 import g from "../styles/globalStyles";
 import Colors from "../constants/colors";
+import { addCustomerApi, deleteCustomerApi, fetchCustomerApi, updateCustomerApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.6:8080';
 const emptyForm = { name: "", phone: "", address: "" };
 
 export default function CustomersScreen() {
@@ -24,6 +25,7 @@ export default function CustomersScreen() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [errors, setErrors] = useState({});
+  const { owner } = useAuth();
 
   // ── Filter customers by search
   const filtered = customers.filter(
@@ -71,12 +73,7 @@ export default function CustomersScreen() {
 
     if (editingId) {
       // Edit existing
-      await fetch(`${API_URL}/api/customers/${editingId}?ownerId=1`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-        .then((response) => response.json())
+      await updateCustomerApi(editingId, owner?.id, form) // Replace with actual ownerId
         .then((data) => console.log("Updated on server:", data))
         .catch((error) =>
           console.error("Error updating on server:", error.message),
@@ -84,12 +81,7 @@ export default function CustomersScreen() {
         fetchData();
     } else {
       // Add new
-      await fetch(`${API_URL}/api/customers?ownerId=1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-        .then((response) => response.json())
+      await addCustomerApi(owner?.id, form) // Replace with actual ownerId
         .then((data) => console.log("Saved to server:", data))
         .catch((error) =>
           console.error("Error saving to server:", error.message),
@@ -112,10 +104,7 @@ export default function CustomersScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await fetch(`${API_URL}/api/customers/${id}?ownerId=1`, {
-              method: "DELETE",
-            })
-              .then((response) => response.json())
+            await deleteCustomerApi(id, owner?.id) // Replace with actual ownerId
               .then((data) => console.log("Deleted from server:", data))
               .catch((error) =>
                 console.error("Error deleting from server:", error.message),
@@ -162,11 +151,11 @@ export default function CustomersScreen() {
         </View>
         <View style={g.statChip}>
           <Text style={g.statChipLabel}>📋 Jobs</Text>
-          <Text style={g.statChipValue}>{item.totalJobs}</Text>
+          <Text style={g.statChipValue}>{item.jobsCount}</Text>
         </View>
         <View style={g.statChip}>
           <Text style={g.statChipLabel}>💰 Paid</Text>
-          <Text style={g.statChipValue}>₹{item.totalPaid}</Text>
+          <Text style={g.statChipValue}>₹{item.amount}</Text>
         </View>
       </View>
     </View>
@@ -174,11 +163,7 @@ export default function CustomersScreen() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/customers?ownerId=1`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const json = await response.json();
+      const json = await fetchCustomerApi(owner?.id); // Replace with actual ownerId
       console.log("Fetched customers:", json?.data?.length);
       setCustomers(json?.data || []);
     } catch (error) {
@@ -189,8 +174,13 @@ export default function CustomersScreen() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (owner && owner.id) {
+      console.log("Owner ID for fetching customers:", owner.id);
+      fetchData();
+    }
+  }, [owner]);
+
+  console.log("owner :", owner);
 
   return (
     <SafeAreaView style={g.container}>

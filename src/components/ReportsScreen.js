@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import g from "../styles/globalStyles";
 import Colors from "../constants/colors";
+import { dashBoardDailyEarningsApi, dashboardReportApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 // ── Same jobs data (replace with shared state/context later)
 const ALL_JOBS = [
@@ -151,8 +153,6 @@ const ALL_JOBS = [
 
 const PERIODS = ["This Week", "This Month", "Last Month", "All Time"];
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.6:8080";
-
 // ── Helpers
 const formatDuration = (secs) => {
   const s = parseInt(secs);
@@ -178,6 +178,7 @@ export default function ReportsScreen() {
   });
 
   const [dailyEarnings, setDailyEarnings] = useState([]);
+  const { owner } = useAuth();
 
   // ── Filter by period
   const filterByPeriod = (jobs) => {
@@ -301,10 +302,7 @@ export default function ReportsScreen() {
           : null;
     console.log("Fetching stats with from:", from, "to:", to); // Debugging log
     try {
-      const response = await fetch(
-        `${API_URL}/api/dashboard/report?ownerId=1&from=${from ? from.toISOString() : ""}&to=${to ? to.toISOString() : ""}`,
-      );
-      const data = await response.json();
+      const data = await dashboardReportApi(owner?.id, from ? from.toISOString() : "", to ? to.toISOString() : ""); // Replace 1 with actual ownerId
       console.log("Fetched dashboard stats:", data); // Debugging log
       setStats(
         {
@@ -337,10 +335,7 @@ export default function ReportsScreen() {
           ? new Date(new Date().setDate(0))
           : null;
     try {
-      const response = await fetch(
-        `${API_URL}/api/dashboard/dailyEarnings?ownerId=1&from=${from ? from.toISOString() : ""}&to=${to ? to.toISOString() : ""}`,
-      );
-      const data = await response.json();
+      const data = await dashBoardDailyEarningsApi(owner?.id, from ? from.toISOString() : "", to ? to.toISOString() : ""); // Replace 1 with actual ownerId
       console.log("Fetched daily earnings:", data); // Debugging log
       setDailyEarnings(data?.data || []);
     } catch (error) {
@@ -612,7 +607,7 @@ export default function ReportsScreen() {
         {[
           { key: "overview", label: "📊 Overview" },
           // { key: 'crops',      label: '🌾 Crops'     },
-          { key: "customers", label: "👥 Customers" },
+          // { key: "customers", label: "👥 Customers" },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}

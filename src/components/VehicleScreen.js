@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import g from "../styles/globalStyles";
 import Colors from "../constants/colors";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.6:8080';
+import { addVehicleApi, deleteVehicleApi, fetchVehiclesApi, updateVehicleApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const emptyForm = { type: "", registrationNumber: "", fuelType: "", ownerId: 1 };
 
@@ -31,6 +31,7 @@ export default function VehicleScreen() {
   const [errors, setErrors] = useState({});
   const [typeModal, setTypeModal] = useState(false);
   const [fuelModal, setFuelModal] = useState(false);
+  const { owner } = useAuth();
 
   // ── Filter vehicles by search
   const filtered = vehicles?.filter(
@@ -73,26 +74,17 @@ export default function VehicleScreen() {
   const handleSave = async () => {
     if (!validate()) return;
 
+    form.ownerId = owner?.id; // Ensure ownerId is included in the form data
     if (editingId) {
       // Edit existing
-      await fetch(`${API_URL}/api/vehicles/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-        .then((response) => response.json())
+      await updateVehicleApi(editingId, form) // Replace 1 with actual ownerId
         .then((data) => console.log("Vehicle saved to server:", data))
         .catch((error) =>
           console.error("Error saving vehicle:", error.message),
         );
     } else {
       // Send to API
-       await fetch(`${API_URL}/api/vehicles?ownerId=1`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-        .then((response) => response.json())
+       await addVehicleApi(form) // Replace 1 with actual ownerId
         .then((data) => console.log("Vehicle saved to server:", data))
         .catch((error) =>
           console.error("Error saving vehicle:", error.message),
@@ -114,12 +106,9 @@ export default function VehicleScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
             // Send delete request to API
-            fetch(`${API_URL}/api/vehicles/${id}`, {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-            })
+            await deleteVehicleApi(id) // Replace 1 with actual ownerId
               .then(() => console.log("Vehicle deleted from server"))
               .catch((error) =>
                 console.error("Error deleting vehicle:", error.message),
@@ -131,8 +120,7 @@ export default function VehicleScreen() {
   };
 
   const fetchVehicles = async () => {
-    await fetch(`${API_URL}/api/vehicles/owner/1`)
-      .then((response) => response.json())
+    await fetchVehiclesApi(owner?.id) // Replace 1 with actual ownerId
       .then((data) => setVehicles(data?.data || []))
       .catch((error) => console.error("Error fetching vehicles:", error.message));
   };

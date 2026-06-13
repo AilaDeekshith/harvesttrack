@@ -6,52 +6,8 @@ import {
 } from 'react-native';
 import g from '../styles/globalStyles';
 import Colors from '../constants/colors';
-
-// ── Dummy Jobs Data
-const INITIAL_JOBS = [
-  {
-    id: '1', customerName: 'Raju Reddy', village: 'Nalgonda',
-    crop: 'Rice', acres: '3.5', rate: '300',
-    amount: '1050', duration: '7800',
-    startTime: '08:30 AM', endTime: '10:45 AM',
-    date: '2024-01-15', status: 'completed', notes: 'Field near highway',
-  },
-  {
-    id: '2', customerName: 'Suresh Kumar', village: 'Warangal',
-    crop: 'Wheat', acres: '2.0', rate: '300',
-    amount: '600', duration: '5400',
-    startTime: '11:00 AM', endTime: '12:30 PM',
-    date: '2024-01-15', status: 'completed', notes: '',
-  },
-  {
-    id: '3', customerName: 'Venkat Rao', village: 'Karimnagar',
-    crop: 'Maize', acres: '5.0', rate: '350',
-    amount: '1750', duration: '10800',
-    startTime: '02:00 PM', endTime: '05:00 PM',
-    date: '2024-01-14', status: 'completed', notes: 'Paid in cash',
-  },
-  {
-    id: '4', customerName: 'Lakshmi Devi', village: 'Khammam',
-    crop: 'Cotton', acres: '1.5', rate: '400',
-    amount: '600', duration: '3600',
-    startTime: '09:00 AM', endTime: '10:00 AM',
-    date: '2024-01-14', status: 'completed', notes: '',
-  },
-  {
-    id: '5', customerName: 'Ramesh Babu', village: 'Nizamabad',
-    crop: 'Rice', acres: '4.0', rate: '300',
-    amount: '1200', duration: '9000',
-    startTime: '07:00 AM', endTime: '09:30 AM',
-    date: '2024-01-13', status: 'completed', notes: 'Extra fuel used',
-  },
-  {
-    id: '6', customerName: 'Krishna Murthy', village: 'Adilabad',
-    crop: 'Soybean', acres: '2.5', rate: '350',
-    amount: '875', duration: '6300',
-    startTime: '03:00 PM', endTime: '04:45 PM',
-    date: '2024-01-13', status: 'completed', notes: '',
-  },
-];
+import { createJobApi, deleteJobApi, fetchActivitiesApi, fetchCustomersApi, fetchJobsApi, fetchVehiclesApi, updateJobApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 // ── Format seconds to readable
 const formatDuration = (secs) => {
@@ -124,7 +80,6 @@ const groupByDate = (jobs) => {
 const FILTERS = ['All', 'Today', 'This Week', 'This Month'];
 const CROPS   = ['All Crops', 'Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Soybean'];
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.6:8080';
 const emptyJobForm = { 
   customerId: null, 
   activityId: null, 
@@ -172,6 +127,7 @@ export default function JobsScreen() {
   const timerRef                          = useRef(null);
   const [summary, setSummary]             = useState(null);
   const [runningJob, setRunningJob]       = useState(null);  // Track the current running job
+  const { owner } = useAuth();
 
   // ── Timer logic for job detail modal
   useEffect(() => {
@@ -278,18 +234,13 @@ export default function JobsScreen() {
       notes: jobForm.notes,
       status: 'in-progress',
       startDate: new Date().toISOString(),
-      ownerId: 1,
+      ownerId: owner?.id,
     };
 
     console.log('Starting job with details:', jobData);
 
     try {
-      const response = await fetch(`${API_URL}/api/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(jobData),
-      });
-      const data = await response.json();
+      const data = await createJobApi(jobData);
       console.log("Job created:", data);
       
       // Reset form and show jobs list
@@ -331,11 +282,7 @@ export default function JobsScreen() {
                 duration: durationInSeconds,
               };
               
-              await fetch(`${API_URL}/api/jobs/${job.id}`, {
-                method: 'PUT',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updateData),
-              });
+              await updateJobApi(job.id, updateData);
               
               setDetailModal(false);
               await fetchJobs();
@@ -396,9 +343,7 @@ export default function JobsScreen() {
         {
           text: 'Delete', style: 'destructive',
           onPress: async () => {
-            await fetch(`${API_URL}/api/jobs/${id}`, {
-              method: 'DELETE',
-            }).then(() => {
+            await deleteJobApi(id).then(() => {
               setStep('jobs');
               setDetailModal(false);
               fetchJobs();
@@ -414,8 +359,7 @@ export default function JobsScreen() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/customers?ownerId=1`);
-      const data = await response.json();
+      const data = await fetchCustomersApi(owner?.id); // Replace with actual ownerId
       setCustomers(data?.data || []);
     } catch (error) {
       console.error("Error fetching customers:", error.message);
@@ -424,8 +368,7 @@ export default function JobsScreen() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/activities`);
-      const data = await response.json();
+      const data = await fetchActivitiesApi(); // Replace with actual ownerId
       setActivities(data?.data || []);
     } catch (error) {
       console.error("Error fetching activities:", error.message);
@@ -434,8 +377,7 @@ export default function JobsScreen() {
 
   const fetchVehicles = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/vehicles/owner/1`);
-      const data = await response.json();
+      const data = await fetchVehiclesApi(owner?.id); // Replace with actual ownerId
       setVehicles(data?.data || []);
     } catch (error) {
       console.error("Error fetching vehicles:", error.message);
@@ -444,8 +386,7 @@ export default function JobsScreen() {
 
   const fetchJobs = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/jobs/owner/1`);
-      const data = await response.json();
+      const data = await fetchJobsApi(owner?.id); // Replace with actual ownerId
       setJobs(data?.data || []);
     } catch (error) {
       console.error("Error fetching jobs:", error.message);

@@ -4,6 +4,8 @@ import {
 } from 'react-native';
 
 import styles from '../styles/globalStyles'
+import { fetchRecentJobsApi, getDashboardStatsApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.6:8080';
 
@@ -15,6 +17,8 @@ const Dashboard = () => {
     jobsCompletedToday: 5,
     todayEarnings: 4500,
   });
+
+  const { owner } = useAuth();
 
   console.log('Dashboard stats:', stats); // Debugging log
 
@@ -30,8 +34,7 @@ const Dashboard = () => {
 
   const fetchRecentJobs = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/jobs/recent/jobs/1`);
-      const data = await response.json();
+      const data = await fetchRecentJobsApi(owner?.id); // Replace with actual ownerId
       setRecentJobs(data?.data || []);
     } catch (error) {
       console.error('Error fetching recent jobs:', error);
@@ -40,8 +43,8 @@ const Dashboard = () => {
 
   const fetchstats = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/dashboard?ownerId=1`);
-      const data = await response.json();
+      console.log('Fetching dashboard stats for ownerId:', owner?.id); // Debugging log
+      const data = await getDashboardStatsApi(owner?.id); // Replace with actual ownerId
       console.log('Fetched dashboard stats:', data); // Debugging log
       setStats({
         totalCustomers: data?.totalCustomers || 0,
@@ -54,9 +57,14 @@ const Dashboard = () => {
     }
   }
   useEffect(() => {
+    if (!owner || !owner.id) {
+      console.log('Owner not available yet, waiting...'); // Debugging log
+      return; // Wait for owner to be available
+    }
+    console.log('Owner loaded, fetching data for id:', owner.id);
     fetchRecentJobs();
     fetchstats();  
-  }, []);
+  }, [owner?.id]);
 
   return (
     <SafeAreaView style={styles.container}>
