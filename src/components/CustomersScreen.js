@@ -10,10 +10,17 @@ import {
   Modal,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import g from "../styles/globalStyles";
 import Colors from "../constants/colors";
-import { addCustomerApi, deleteCustomerApi, fetchCustomerApi, updateCustomerApi } from "../services/api";
+import {
+  addCustomerApi,
+  deleteCustomerApi,
+  fetchCustomerApi,
+  updateCustomerApi,
+} from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const emptyForm = { name: "", phone: "", address: "" };
@@ -78,7 +85,7 @@ export default function CustomersScreen() {
         .catch((error) =>
           console.error("Error updating on server:", error.message),
         );
-        fetchData();
+      fetchData();
     } else {
       // Add new
       await addCustomerApi(owner?.id, form) // Replace with actual ownerId
@@ -164,7 +171,6 @@ export default function CustomersScreen() {
   const fetchData = async () => {
     try {
       const json = await fetchCustomerApi(owner?.id); // Replace with actual ownerId
-      console.log("Fetched customers:", json?.data?.length);
       setCustomers(json?.data || []);
     } catch (error) {
       console.error(error);
@@ -175,12 +181,9 @@ export default function CustomersScreen() {
 
   useEffect(() => {
     if (owner && owner.id) {
-      console.log("Owner ID for fetching customers:", owner.id);
       fetchData();
     }
   }, [owner]);
-
-  console.log("owner :", owner);
 
   return (
     <SafeAreaView style={g.container}>
@@ -244,73 +247,89 @@ export default function CustomersScreen() {
 
       {/* ── Add / Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={g.modalOverlay}>
-          <View style={g.modalSheet}>
-            {/* Modal Header */}
-            <View style={g.modalHeader}>
-              <Text style={g.modalTitle}>
-                {editingId ? "✏️ Edit Customer" : "➕ Add Customer"}
-              </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={g.modalClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Name */}
-              <Text style={g.inputLabel}>Full Name *</Text>
-              <TextInput
-                style={[g.input, errors.name && g.inputError]}
-                placeholder="e.g. Raju Reddy"
-                value={form.name}
-                onChangeText={(v) => setForm({ ...form, name: v })}
-              />
-              {errors.name && <Text style={g.errorText}>{errors.name}</Text>}
-
-              {/* Phone */}
-              <Text style={g.inputLabel}>Phone Number *</Text>
-              <TextInput
-                style={[g.input, errors.phone && g.inputError]}
-                placeholder="10-digit mobile number"
-                keyboardType="phone-pad"
-                maxLength={10}
-                value={form.phone}
-                onChangeText={(v) => setForm({ ...form, phone: v })}
-              />
-              {errors.phone && <Text style={g.errorText}>{errors.phone}</Text>}
-
-              {/* Village */}
-              <Text style={g.inputLabel}>Village / Area *</Text>
-              <TextInput
-                style={[g.input, errors.address && g.inputError]}
-                placeholder="e.g. Nalgonda"
-                value={form.address}
-                onChangeText={(v) => setForm({ ...form, address: v })}
-              />
-              {errors.address && (
-                <Text style={g.errorText}>{errors.address}</Text>
-              )}
-
-              {/* Buttons */}
-              <View style={g.modalBtns}>
-                <TouchableOpacity
-                  style={[g.btnOutline, g.modalBtnHalf]}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text style={g.btnOutlineText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[g.btnPrimary, g.modalBtnHalf]}
-                  onPress={handleSave}
-                >
-                  <Text style={g.btnPrimaryText}>
-                    {editingId ? "Update" : "Save"}
-                  </Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        >
+          <TouchableOpacity
+            style={g.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={g.modalSheet}
+              onPress={() => {}} // ← Prevent close when tapping inside
+            >
+              {/* Modal Header */}
+              <View style={g.modalHeader}>
+                <Text style={g.modalTitle}>
+                  {editingId ? "✏️ Edit Customer" : "➕ Add Customer"}
+                </Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Text style={g.modalClose}>✕</Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </View>
-        </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Name */}
+                <Text style={g.inputLabel}>Full Name *</Text>
+                <TextInput
+                  style={[g.input, errors.name && g.inputError]}
+                  placeholder="e.g. Raju Reddy"
+                  value={form.name}
+                  onChangeText={(v) => setForm({ ...form, name: v })}
+                />
+                {errors.name && <Text style={g.errorText}>{errors.name}</Text>}
+
+                {/* Phone */}
+                <Text style={g.inputLabel}>Phone Number *</Text>
+                <TextInput
+                  style={[g.input, errors.phone && g.inputError]}
+                  placeholder="10-digit mobile number"
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  value={form.phone}
+                  onChangeText={(v) => setForm({ ...form, phone: v })}
+                />
+                {errors.phone && (
+                  <Text style={g.errorText}>{errors.phone}</Text>
+                )}
+
+                {/* Village */}
+                <Text style={g.inputLabel}>Village / Area *</Text>
+                <TextInput
+                  style={[g.input, errors.address && g.inputError]}
+                  placeholder="e.g. Nalgonda"
+                  value={form.address}
+                  onChangeText={(v) => setForm({ ...form, address: v })}
+                />
+                {errors.address && (
+                  <Text style={g.errorText}>{errors.address}</Text>
+                )}
+
+                {/* Buttons */}
+                <View style={g.modalBtns}>
+                  <TouchableOpacity
+                    style={[g.btnOutline, g.modalBtnHalf]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text style={g.btnOutlineText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[g.btnPrimary, g.modalBtnHalf]}
+                    onPress={handleSave}
+                  >
+                    <Text style={g.btnPrimaryText}>
+                      {editingId ? "Update" : "Save"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

@@ -20,8 +20,6 @@ const Dashboard = () => {
 
   const { owner } = useAuth();
 
-  console.log('Dashboard stats:', stats); // Debugging log
-
   const [recentJobs, setRecentJobs] = useState([]);
 
   function convertSeconds(totalSeconds) {
@@ -43,9 +41,7 @@ const Dashboard = () => {
 
   const fetchstats = async () => {
     try {
-      console.log('Fetching dashboard stats for ownerId:', owner?.id); // Debugging log
       const data = await getDashboardStatsApi(owner?.id); // Replace with actual ownerId
-      console.log('Fetched dashboard stats:', data); // Debugging log
       setStats({
         totalCustomers: data?.totalCustomers || 0,
         activeJobs: data?.activeJobs || 0,
@@ -58,10 +54,8 @@ const Dashboard = () => {
   }
   useEffect(() => {
     if (!owner || !owner.id) {
-      console.log('Owner not available yet, waiting...'); // Debugging log
       return; // Wait for owner to be available
     }
-    console.log('Owner loaded, fetching data for id:', owner.id);
     fetchRecentJobs();
     fetchstats();  
   }, [owner?.id]);

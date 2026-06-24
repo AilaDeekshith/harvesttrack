@@ -9,12 +9,14 @@ import ReportsScreen   from './src/components/ReportsScreen';
 import VehiclesScreen  from './src/components/VehicleScreen';
 import Colors          from './src/constants/colors';
 import { TouchableOpacity, Text } from 'react-native';
+import FuelScreen from './src/components/FuelScreen';
 
 const tabs = [
   { key: 'dashboard', label: 'Home',      icon: '🏠' },
   { key: 'customers', label: 'Customers', icon: '👥' },
   { key: 'jobs',      label: 'Jobs',      icon: '📋' },
   { key: "vehicles", label: "Vehicles", icon: "🚜" },
+    { key: 'fuel',      label: 'Fuel',      icon: '⛽' },
   { key: 'reports',   label: 'Reports',   icon: '📊' },
 ];
 
@@ -53,6 +55,7 @@ function MainApp() {
       case 'customers': return <CustomersScreen onLogout={forceLogout} />;
       case 'jobs':      return <JobsScreen      onLogout={forceLogout} />;
       case 'vehicles': return <VehiclesScreen  onLogout={forceLogout} />;
+      case 'fuel': return <FuelScreen onLogout={forceLogout} />;
       case 'reports':   return <ReportsScreen   onLogout={forceLogout} />;
       default:          return <DashboardScreen onLogout={logout} />;
     }

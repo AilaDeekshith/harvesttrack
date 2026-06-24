@@ -285,3 +285,46 @@ export const dashBoardDailyEarningsApi = async (ownerId, from, to) => {
   );
   return response.json();
 };
+
+// ── Fuel APIs
+export const fetchFuelByVehicleApi = async (vehicleId, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel/vehicle/${vehicleId}`, 'GET', null, onLogout
+  );
+  return res.json();
+};
+
+export const fetchFuelByOwnerApi = async (ownerId, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel/owner/${ownerId}`, 'GET', null, onLogout
+  );
+  return res.json();
+};
+
+export const fetchVehicleFuelStatsApi = async (vehicleId, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel/vehicle/${vehicleId}/stats`, 'GET', null, onLogout
+  );
+  return res.json();
+};
+
+export const addFuelApi = async (data, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel`, 'POST', data, onLogout
+  );
+  return res.json();
+};
+
+export const updateFuelApi = async (id, data, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel/${id}`, 'PUT', data, onLogout
+  );
+  return res.json();
+};
+
+export const deleteFuelApi = async (id, onLogout) => {
+  const res = await apiCall(
+    `/api/fuel/${id}`, 'DELETE', null, onLogout
+  );
+  return res.json();
+};

@@ -300,10 +300,8 @@ export default function ReportsScreen() {
         : period === "Last Month"
           ? new Date(new Date().setDate(0))
           : null;
-    console.log("Fetching stats with from:", from, "to:", to); // Debugging log
     try {
       const data = await dashboardReportApi(owner?.id, from ? from.toISOString() : "", to ? to.toISOString() : ""); // Replace 1 with actual ownerId
-      console.log("Fetched dashboard stats:", data); // Debugging log
       setStats(
         {
           totalHours: data?.data?.totalHours || 0,
@@ -336,7 +334,6 @@ export default function ReportsScreen() {
           : null;
     try {
       const data = await dashBoardDailyEarningsApi(owner?.id, from ? from.toISOString() : "", to ? to.toISOString() : ""); // Replace 1 with actual ownerId
-      console.log("Fetched daily earnings:", data); // Debugging log
       setDailyEarnings(data?.data || []);
     } catch (error) {
       console.error("Error fetching daily earnings:", error);
@@ -429,8 +426,6 @@ export default function ReportsScreen() {
       </View>
     </>
   );
-
-  console.log("Rendering with stats:", stats, "dailyEarnings:", dailyEarnings); // Debugging log
 
   // ────────────────────────────────────────
   // TAB: CROPS
